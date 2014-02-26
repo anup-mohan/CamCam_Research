@@ -37,6 +37,9 @@ for ip in ipfile:
 	#number of frame wanted
 	des_frame = 2
 
+	# start the download timer
+	signal.alarm(DOWNLOAD_IMAGE_TIMEOUT)
+
 	try:
 		#the url of the MJPEG stream"
 		stream_mjpeg = urllib.urlopen("http://"+ip_addr+"/axis-cgi/mjpg/video.cgi")
@@ -46,6 +49,8 @@ for ip in ipfile:
 		signal.alarm(0)
 		flag_stream_mjpeg =0
 		continue
+
+	signal.alarm(0)
 
 	# start the download timer
 	signal.alarm(DOWNLOAD_IMAGE_TIMEOUT)
