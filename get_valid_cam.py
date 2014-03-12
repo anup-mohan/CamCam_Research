@@ -1,3 +1,10 @@
+####################################################################################################################
+# Script to find all valid axis cameras.
+# Script will deem a camera to be invalid if it causes a Value Error, IO Error or a Timeout
+# The script needs an input text file containing the list of IP address of all axis cameras 
+# The input file can be obtained by running get_camera_list.py
+####################################################################################################################
+
 import urllib
 import sys
 import time
@@ -26,6 +33,9 @@ fpsfile = open("valid_axis_cams_all.txt", "w")
 # Flag to see if stream_mjpeg opened succesfully
 flag_stream_mjpeg =0
 
+#number of frames wanted
+des_frame = 2
+
 for ip in ipfile:
 
 	# Remove new line character
@@ -34,9 +44,6 @@ for ip in ipfile:
 	#index for video frame
 	cnt = 0
 	
-	#number of frame wanted
-	des_frame = 2
-
 	# start the download timer
 	signal.alarm(DOWNLOAD_IMAGE_TIMEOUT)
 

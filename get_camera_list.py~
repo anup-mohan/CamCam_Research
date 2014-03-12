@@ -1,5 +1,7 @@
 ####################################################################################################################
-# Script to find the list of all axis cameras in the database.
+# Script to calculate and save the frame rate of all active axis cameras.
+# The script needs an input text file containing the list of IP address of all active axis cameras 
+# The input file can be obtained by running get_valid_cam.py
 ####################################################################################################################
 
 import MySQLdb

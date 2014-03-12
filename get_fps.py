@@ -1,3 +1,9 @@
+####################################################################################################################
+# Script to calculate and save the frame rate of all active axis cameras.
+# The script needs an input text file containing the list of IP address of all active axis cameras 
+# The input file can be obtained by running get_valid_cam.py
+####################################################################################################################
+
 import urllib
 import sys
 import time
@@ -8,6 +14,9 @@ DOWNLOAD_IMAGE_TIMEOUT = 10
 
 # Timeout for a minute of download
 DOWNLOAD_IMAGE_TIMEOUT2 = 70
+
+# Duration of stream
+STREAM_TIME = 60
 
 def timeout_handler(signum, frame):
         """ This function handles the timeout for downloading an image.
@@ -57,7 +66,7 @@ for ip in ipfile:
 	signal.alarm(0)
 
 	# Timeout value to be 60 seconds
-	timeout = time.time() + 60
+	timeout = time.time() + STREAM_TIME
 
 	# Start the download timer
 	signal.alarm(DOWNLOAD_IMAGE_TIMEOUT2)
@@ -101,7 +110,7 @@ for ip in ipfile:
 		continue
 
 	# fps = no:of frames/time(seconds)
-	fps = cnt/60.0
+	fps = cnt/float(STREAM_TIME)
 	
 	# Write ip and fps to file
 	fpsfile.write("%s\t" %ip_addr)
