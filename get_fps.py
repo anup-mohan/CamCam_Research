@@ -8,6 +8,10 @@ import urllib
 import sys
 import time
 import signal
+import datetime
+
+ipfilename = "axis_high_ip.txt"
+fpsfilename = "fps_" + str(datetime.date.today()) + ".txt"
 
 # Timeout for single image
 DOWNLOAD_IMAGE_TIMEOUT = 10
@@ -29,9 +33,9 @@ signal.signal(signal.SIGALRM, timeout_handler)
 
 
 # File containing all the ip addresses
-ipfile = open("valid_axis_cam_list3.txt", "r")
+ipfile = open(ipfilename, "r")
 # File to save fps for all cameras
-fpsfile = open("axis_camera_fps_3.txt", "w")
+fpsfile = open(fpsfilename, "w")
 
 index=0
 
