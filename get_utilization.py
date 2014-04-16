@@ -13,10 +13,8 @@ import sys
 import time
 import signal
 
-#output = subprocess.Popen(["python", '/home/anupmohan/Documents/Research/camcam/get_utilization_single_cam.py','128.10.29.33'], stdout=subprocess.PIPE).communicate()[0]
-
 # Input file
-ipfile = open("test.txt", "r")
+ipfile = open("test_769.txt", "r")
 line = ipfile.readlines()
 length = len(line)
 
@@ -40,9 +38,12 @@ for i in range(length+1):
 	time.sleep(10)
 
 	# Get initial cpu utilization value
-	cpu_line = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
-	index = cpu_line.find("%id",40)
-	init_cpu_util = 100.0 - float(cpu_line[index-7:index].split(" ")[1])
+	cpu_line = subprocess.Popen(["bash", 'get_total_cpu_util.sh'], stdout=subprocess.PIPE).communicate()[0]
+	index = cpu_line.find("id",40)
+	if float(cpu_line[index-5:index]) == 0.0:
+		init_cpu_util = 0.0
+	else:
+		init_cpu_util = 100.0 - float(cpu_line[index-5:index])
 
 	# Start streaming from 'i' number of cameras in parallel
 	for j in range(i):
@@ -56,9 +57,9 @@ for i in range(length+1):
 
 	while time.time() < timeout:
 		# Measure instantaneous cpu utilization
-		cpu_line = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
-		index = cpu_line.find("%id",40)
-		total_cpu_util += 100.0 - float(cpu_line[index-7:index].split(" ")[1])
+		cpu_line = subprocess.Popen(["bash", 'get_total_cpu_util.sh'], stdout=subprocess.PIPE).communicate()[0]
+		index = cpu_line.find("id",40)
+		total_cpu_util += 100.0 - float(cpu_line[index-5:index])
 		count += 1
 	
 	# Get average cpu utilization
@@ -76,15 +77,20 @@ for i in range(length+1):
 	for nw_line in nwfile:
 
 		if 'average' in nw_line:
-			nw_index = nw_line.find("kbit/s")
-			avg_nw_util = nw_line[nw_index-7:nw_index-1]
-			break 
+			nw_index = nw_line.find("Mbit/s")
+			if (nw_index == -1):
+				nw_index = nw_line.find("kbit/s")
+				avg_nw_util = nw_line[nw_index-7:nw_index-1]
+				break
+			elif (nw_index > 0):
+				avg_nw_util = nw_line[nw_index-7:nw_index-1]
+				break 
 
 	# Close network util file
 	nwfile.close()
 
 	# Write the results
-	resfile.write("num_of_cams:%d init_cpu:%f avg_cpu:%f avg_nw:%s" %(i,init_cpu_util,avg_cpu_util,avg_nw_util))
+	resfile.write("num_of_cams: %d init_cpu: %f avg_cpu: %f avg_nw: %s %s" %(i,init_cpu_util,avg_cpu_util,avg_nw_util,nw_line[nw_index:nw_index+6]))
 	resfile.write("\n")
 
 	# Wait before starting next iteration
