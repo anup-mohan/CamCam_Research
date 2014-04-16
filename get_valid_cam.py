@@ -26,9 +26,9 @@ signal.signal(signal.SIGALRM, timeout_handler)
 
 
 # File containing all the ip addresses
-ipfile = open("axis_camera_list_all.txt", "r")
+ipfile = open("axis_US_high.txt", "r")
 # File to save fps for all cameras
-fpsfile = open("valid_axis_cams_all.txt", "w")
+fpsfile = open("test_03_31_2014.txt", "w")
 
 # Flag to see if stream_mjpeg opened succesfully
 flag_stream_mjpeg =0
