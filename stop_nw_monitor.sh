@@ -1,15 +1,15 @@
 ####################################################################################################################
 # Stop the live network monitoring by sending a CTRL-C to the vnstat process ####################################################################################################################
 
-#!/bin/bash
+#!/usr/bin/bash
 
 # Find network monitoring process
-pid=`ps -elf | grep "vnstat -l" | grep -v grep | cut -d" " -f8`
+pid=`ps -elf | grep "vnstat -l" | grep -v grep | cut -d" " -f4`
 
 if [ "$pid" == "" ]; then
-	pid=`ps -elf | grep "vnstat -l" | grep -v grep | cut -d" " -f9`
+	pid=`ps -elf | grep "vnstat -l" | grep -v grep | cut -d" " -f5`
 fi
 
 # Kill the process by sending CTRL-C
-kill -INT $pid
+/usr/bin/kill -INT $pid
 
