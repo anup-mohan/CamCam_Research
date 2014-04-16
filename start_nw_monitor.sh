@@ -2,7 +2,7 @@
 # Start live network monitoring using vnstat command
 ####################################################################################################################
 
-#!/bin/bash
+#!/usr/bin/bash
 
 # Save network statistics
 vnstat -l >network_stat.log 
