@@ -12,11 +12,29 @@ import urllib
 import sys
 import time
 import signal
+import threading
+import os
+
+
+# Defining the thread to analyze the camera
+class myThread(threading.Thread):
+        def __init__(self, threadID, name, ip_addr, trial):
+                threading.Thread.__init__(self)
+                self.threadID = threadID
+                self.name = name
+                self.ip_addr = ip_addr
+                self.trial = trial
+        def run(self):
+                #print "Starting " + self.name
+                os.system("python /home/anupmohan/Documents/Research/CamCam_Research/CamCam_Research/get_utilization_single_cam.py %s %s" %(self.ip_addr,self.trial))
+                #print "Exiting " + self.name
+
 
 # Input file
-ipfile = open("test_769.txt", "r")
+ipfile = open("test_412.txt", "r")
 line = ipfile.readlines()
 length = len(line)
+thread_ptr = [[] for x in range(length+1)]
 
 # Output file
 resfile = open("overall_util_results.txt", "w")
@@ -30,6 +48,9 @@ for i in range(length+1):
 	# Reset cpu util counters
 	count =0
 	total_cpu_util = 0
+	
+	# Initialize the list for thread synchronization
+	threads = []
 
 	# Start Network Monitoring
 	subprocess.Popen('./start_nw_monitor.sh',shell=True)
@@ -47,7 +68,11 @@ for i in range(length+1):
 
 	# Start streaming from 'i' number of cameras in parallel
 	for j in range(i):
-		subprocess.Popen(["python", 'get_utilization_single_cam.py',line[j].split("\n")[0],str(i)])
+		#subprocess.Popen(["python", 'get_utilization_single_cam.py',line[j].split("\n")[0],str(i)])
+		thr_name = "Thread-" + str(j)
+                thread_ptr[j] = myThread(j, thr_name, line[j].split("\n")[0],i)
+                thread_ptr[j].start()
+                threads.append(thread_ptr[j])	
 	
 	# Print the number of cameras being analyzed
 	print ("%d\n" %i)
@@ -61,6 +86,10 @@ for i in range(length+1):
 		index = cpu_line.find("id",40)
 		total_cpu_util += 100.0 - float(cpu_line[index-5:index])
 		count += 1
+
+	# Make sure all threads have finished execution
+	for k in threads:
+                k.join()
 	
 	# Get average cpu utilization
 	avg_cpu_util = total_cpu_util/float(count)

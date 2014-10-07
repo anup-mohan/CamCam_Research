@@ -33,7 +33,7 @@ signal.signal(signal.SIGALRM, timeout_handler)
 
 
 # To measure CPU and Memory utilization
-command=["./get_cpu_mem_util.sh"]
+command=["bash",'./get_cpu_mem_util.sh']
 proc_id=[str(os.getpid())]
 command.extend(proc_id)
 cpu_util = 0.0
@@ -45,7 +45,7 @@ ip_addr = sys.argv[1]
 trial = sys.argv[2]
 
 # File to save the results
-path_to_file = "/home/anupmohan/Documents/Research/camcam/Results/"
+path_to_file = "/home/anupmohan/Documents/Research/CamCam_Research/Results/"
 filename = path_to_file+ip_addr+".txt"
 resfile = open(filename, "a")
 
@@ -66,7 +66,7 @@ try:
 	stream_mjpeg = urllib.urlopen("http://"+ip_addr+"/axis-cgi/mjpg/video.cgi")
 	flag_stream_mjpeg =1
 except (ValueError, IOError, Exception):
-	print("Error in IP: %s" %ip)
+	print("Error at 1 in IP: %s" %ip_addr)
 	flag_stream_mjpeg =0
 	signal.alarm(0)
 
@@ -93,22 +93,23 @@ try:
 	       			#read in the empty line and binary image data
 	       			data = stream_mjpeg.read(img_size+2)
 				# Measure CPU/Mem utilization
-				output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
-				cpu_util += float(output.split(" ")[2])
-				mem_util += float(output.split(" ")[3])
+#				output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
+	#			output = subprocess.Popen(["bash", 'get_cpu_mem_util.sh',], stdout=subprocess.PIPE).communicate()[0]
+#				cpu_util += float(output.split(" ")[2])
+#				mem_util += float(output.split(" ")[3])
 	#        		f = open(name+repr(cnt)+".jpg","wb")
 				#empty line takes 2 bytes(<CR> <LF>),thus start to record from byte 3
 	# 	      		f.write(data[2:])
 	#	      		f.close()
 			except (ValueError, IOError, Exception):
-				print("Error in IP: %s" %ip)
+				print("Error at 2 in IP: %s" %ip_addr)
 				error_flag=1
 				break
 
 	       		cnt += 1
 
 except (ValueError, IOError, Exception):
-	print("Error in IP at pt3: %s" %ip)
+	print("Error at 3 in IP at pt3: %s" %ip_addr)
 	error_flag=1
 
 # Reset the timer
@@ -118,13 +119,18 @@ if error_flag == 0:
 	# fps = no:of frames/time(seconds)
 	fps = cnt/float(STREAM_TIME)
 
+	# To prevent Divide by Zero Error
+	if cnt == 0:
+		cnt = 1
+
 	# Average CPU/Mem utilization
 	cpu_util = cpu_util/cnt	
 	mem_util = mem_util/cnt	
 
 	# Return fps, cpu and memory utilization
 	#print("fps: %f cpu_util: %f mem_util: %f" %(fps,cpu_util,mem_util))
-	resfile.write("trial:%s fps:%f cpu:%f mem:%f" %(trial,fps,cpu_util,mem_util))
+#	resfile.write("trial: %s fps: %f cpu: %f mem: %f" %(trial,fps,cpu_util,mem_util))
+	resfile.write("trial: %s fps: %f" %(trial,fps))
 	resfile.write("\n")
 
 if flag_stream_mjpeg:
