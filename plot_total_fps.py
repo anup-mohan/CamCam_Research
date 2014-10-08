@@ -11,8 +11,9 @@ fpsfilename="fps_2014-04-10.txt"
 
 # File containing all the fps values
 fpsfile = open(fpsfilename, "r")
+rawfile = open("total_fps_vs_ncams.txt", "w")
 
-#num_of_files = len([filename for filename in os.listdir(dir_path)])
+nfiles = len([filename for filename in os.listdir(dir_path)])
 num_of_files = len(fpsfile.readlines())
 fpsfile.close()
 
@@ -50,6 +51,10 @@ for filename in os.listdir(dir_path):
 	
 	ipfile.close()
 	fpsfile.close()
+
+for count in range(1, nfiles):
+	 rawfile.write("%s,%s" %(num_of_cams[count],total_fps[count]))
+         rawfile.write("\n")
 
 
 # Create the plot
