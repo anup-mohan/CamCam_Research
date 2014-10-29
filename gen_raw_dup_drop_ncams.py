@@ -121,7 +121,7 @@ for index in xrange(1,trials+1):
 		total_drop_ratio[index-1] += drop/frame
 
 # Save the results for plotting
-sum_filename = path_to_dir + "total_efps_vs_ncams_" + str(inst_type) + "_.txt"
+sum_filename = path_to_dir + "total_efps_vs_ncams_" + str(inst_type) + ".txt"
 sum_file = open(sum_filename, "w")
 
 for cam in xrange(0,trials):
