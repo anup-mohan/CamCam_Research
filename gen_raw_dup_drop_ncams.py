@@ -44,6 +44,7 @@ match3 = "drop="
 len_match1 = len(match1)
 len_match2 = len(match2)
 len_match3 = len(match3)
+LINE_OFFSET = 2
 
 # Initializing Arrays
 filenames = []
@@ -87,8 +88,8 @@ for index in xrange(1,trials+1):
 		for line in logfile:
 			length += 1
 
-		# Read the second last line, which has the required info
-		search_line = linecache.getline(filenames[fn],length-2)
+		# Read the line which has the required info
+		search_line = linecache.getline(filenames[fn],length-LINE_OFFSET)
 		
 		# Get total frames, duplicate frames and dropped frames
 		f_index = search_line.find(match1,0)
