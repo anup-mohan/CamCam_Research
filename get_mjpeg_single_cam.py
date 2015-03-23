@@ -37,6 +37,9 @@ def get_MJPEG_stream(ip_addr,trial):
     filename = ip_addr + ".txt"
     resfile = open(filename, "a")
 
+    # Image file name prefix
+    image_name = str(ip_addr) + "_" + str(trial) + "_"
+
     # Reset Error Flag
     error_flag = 0
 
@@ -82,10 +85,10 @@ def get_MJPEG_stream(ip_addr,trial):
                     # Read in the empty line and binary image data
                     data = stream_mjpeg.read(img_size + 2)
 
-                # f = open(name+repr(cnt)+".jpg","wb")
-                # Empty line takes 2 bytes(<CR> <LF>),thus start to record from byte 3
-                # f.write(data[2:])
-                # f.close()
+                    f = open(image_name+repr(cnt)+".jpg","wb")
+                    # Empty line takes 2 bytes(<CR> <LF>),thus start to record from byte 3
+                    f.write(data[2:])
+                    f.close()
 
                 except (ValueError, IOError, Exception):
                     print("Error at 2 in IP: %s" % ip_addr)
