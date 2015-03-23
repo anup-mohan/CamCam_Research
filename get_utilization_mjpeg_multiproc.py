@@ -9,60 +9,60 @@
 
 from multiprocessing import Process
 from multiprocessing import cpu_count
-import subprocess
 import sys
 import time
 import signal
 import threading
-import os
 import datetime
+import monitor
+import get_mjpeg_single_cam
 
 
 # Global variable to keep track of the trial count
 trial = 0
 
 # Defining the thread to analyze the camera
-class camThread(threading.Thread):
-        def __init__(self, threadID, name, ip_addr, trial):
-                threading.Thread.__init__(self)
-                self.threadID = threadID
-                self.name = name
-                self.ip_addr = ip_addr
-                self.trial = trial
-		self.date = datetime.date.today()
-		self.filename = "trial_"+str(trial)+"_"+str(self.date)
-        def run(self):
-                #print "Starting " + self.name
-                os.system("python /home/anupmohan/Documents/Research/CamCam_Research/CamCam_Research/get_utilization_single_cam.py %s %s" %(self.ip_addr,self.trial))
-                #print "Exiting " + self.name
+class CamThread(threading.Thread):
+    def __init__(self, threadID, name, ip_addr, trial):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.ip_addr = ip_addr
+        self.trial = trial
+        self.date = datetime.date.today()
+        self.filename = "trial_" + str(trial) + "_" + str(self.date)
+
+    def run(self):
+        # print "Starting " + self.name
+        get_mjpeg_single_cam.get_MJPEG_stream(self.ip_addr,self.trial)
+        # print "Exiting " + self.name
+
 
 # Define the process to call threads to analyze the camera
-def camProcess(start_ptr,end_ptr):
+def cam_process(start_ptr, end_ptr):
+    num_threads = end_ptr - start_ptr
+    thread_ptr = [[] for x in range(num_threads + 1)]
 
-        num_threads = end_ptr - start_ptr
-        thread_ptr = [[] for x in range(num_threads+1)]
+    # Initialize the list for thread synchronization
+    threads = []
 
-        # Initialize the list for thread synchronization
-        threads = []
+    # Start streaming from 'i' number of cameras in parallel
+    for j in xrange(start_ptr, end_ptr):
 
-        # Start streaming from 'i' number of cameras in parallel
-        for j in xrange(start_ptr,end_ptr):
-
-            thr_name = "Thread-" + str(j)
-            thread_ptr[j] = camThread(j, thr_name, line[j].split("\n")[0],i)
-            thread_ptr[j].start()
-            threads.append(thread_ptr[j])
+        thr_name = "Thread-" + str(j)
+        thread_ptr[j] = CamThread(j, thr_name, line[j].split("\n")[0], i)
+        thread_ptr[j].start()
+        threads.append(thread_ptr[j])
 
         # Make sure all threads have finished execution
-            for k in threads:
-                k.join()
+        for k in threads:
+            k.join()
 
 
 NUM_PROCS = cpu_count()
-TIMEOUT_VALUE = 60 # time for which utilization is calculated and averaged
-DOWNLOAD_IMAGE_TIMEOUT = TIMEOUT_VALUE * 3 # Timeout to detect the crashing of the program
-
-
+TIMEOUT_VALUE = 60  # time for which utilization is calculated and averaged
+DOWNLOAD_IMAGE_TIMEOUT = TIMEOUT_VALUE * 3  # Timeout to detect the crashing of the program
+SLEEP_TIMEOUT = 5 # Time to wait before starting next iteration
 
 if __name__ == '__main__':
 
@@ -70,135 +70,108 @@ if __name__ == '__main__':
     ipfile = open(sys.argv[1], "r")
     line = ipfile.readlines()
     length = len(line)
-    thread_ptr = [[] for x in range(length+1)]
+    thread_ptr = [[] for x in range(length + 1)]
 
     # Output file
-    resfile = open("overall_util_results.txt", "w")
+    resfile = open("overall_MJPEG_util_results.txt", "w")
 
-    # To measure overall CPU utilization
-    command=["./get_total_cpu_util.sh"]
+    for i in xrange(1,length + 1):
 
+        # Reset cpu util counters
+        count = 0
+        total_mem_util = 0.0
 
-    for i in range(length+1):
+        proc_thread_cnt = [0 for x in range(NUM_PROCS)]
 
-            # Reset cpu util counters
-            count =0
-            total_cpu_util = 0
+        # Initialize the list for process synchronization
+        procs = []
 
-            proc_thread_cnt = [0 for x in range(NUM_PROCS)]
+        # Find num of procs and threads per process
+        proc_count = min(NUM_PROCS, i)
+        thread_count = int(proc_count / i)
+        thread_rem = int(proc_count % i)
+        proc_thread_cnt = [thread_count for x in range(NUM_PROCS)]
 
-            # Initialize the list for process synchronization
-            procs = []
+        # Allocate remaining threads equally among processes
+        if (thread_rem != 0):
+            k = 0
+            for j in range(thread_rem):
+                proc_thread_cnt[k] += 1
+                k += 1
 
-            # Start Network Monitoring
-            subprocess.Popen('./start_nw_monitor.sh',shell=True)
+        # Start the download timer
+        signal.alarm(DOWNLOAD_IMAGE_TIMEOUT)
 
-            # Wait for vnstat to initialize
-            time.sleep(10)
+        try:
 
-            # Get initial cpu utilization value
-            cpu_line = subprocess.Popen(["bash", 'get_total_cpu_util.sh'], stdout=subprocess.PIPE).communicate()[0]
-            index = cpu_line.find("id",40)
-            if float(cpu_line[index-5:index-1]) == 0.0:
-                init_cpu_util = 0.0
-            else:
-                init_cpu_util = 100.0 - float(cpu_line[index-5:index-1])
+            # Array to save all processes
+            p = [[] for x in range(proc_count)]
+            ip_index = 0
 
-            # Find num of procs and threads per process
-            proc_count = min(NUM_PROCS, i)
-            thread_count = int(proc_count/i)
-            thread_rem = int(proc_count%i)
-            proc_thread_cnt = [thread_count for x in range(NUM_PROCS)]
+            # Start the processes
+            for j in range(proc_count):
+                p[j] = Process(target=cam_process, args=(ip_index, ip_index + proc_thread_cnt[j],))
+                p[j].start()
+                procs.append(p[j])
+                ip_index += proc_thread_cnt[j]
 
-            # Allocate remaining threads equally among processes
-            if(thread_rem != 0):
-                k=0
-                for j in range(thread_rem):
-                    proc_thread_cnt[k]+=1
-                    k+=1
+            # Print the number of cameras being analyzed
+            print ("%d\n" % i)
 
-            # Start the download timer
-            signal.alarm(DOWNLOAD_IMAGE_TIMEOUT)
+            # Set timeout for synchronization
+            timeout = time.time() + TIMEOUT_VALUE
 
-            try:
+            # Define a monitor object to measure utilization
+            util_object = monitor.Monitor()
 
-                # Array to save all processes
-                p =[[] for x in range(proc_count)]
-                ip_index=0
+            while time.time() < timeout:
+                # Measure instantaneous memory utilization
+                _, _, _, mem_util = monitor.Monitor.get_memory_usage()
+                total_mem_util += mem_util
+                count += 1
 
-                # Start the processes
-                for j in range(proc_count):
-
-                    p[j] = Process(target=camProcess, args=(ip_index,ip_index+proc_thread_cnt[j],))
-                    p[j].start()
-                    procs.append(p[j])
-                    ip_index += proc_thread_cnt[j]
-
-                # Print the number of cameras being analyzed
-                print ("%d\n" %i)
-
-                # Set timeout for synchronization
-                timeout = time.time() + 55
-
-                while time.time() < timeout:
-                    # Measure instantaneous cpu utilization
-                    cpu_line = subprocess.Popen(["bash", 'get_total_cpu_util.sh'], stdout=subprocess.PIPE).communicate()[0]
-                    index = cpu_line.find("id",40)
-                    total_cpu_util += 100.0 - float(cpu_line[index-5:index-1])
-                    count += 1
-
-            except (MemoryError):
-                print "Exiting the program due to Memory error"
-                signal.alarm(0)
-                sys.exit(1)
-
-            except (Exception):
-                print "Exiting the program due to Timeout"
-                signal.alarm(0)
-                sys.exit(1)
-
-
-            # Reset the download timer
+        except (MemoryError):
+            print "Exiting the program due to Memory error"
             signal.alarm(0)
+            sys.exit(1)
 
-            # Make sure all processes have finished execution
-            for k in procs:
-			    k.join()
+        except (Exception):
+            print "Exiting the program due to Timeout"
+            signal.alarm(0)
+            sys.exit(1)
 
 
-            # Get average cpu utilization
-            avg_cpu_util = total_cpu_util/float(count)
+        # Reset the download timer
+        signal.alarm(0)
 
-            # Stop Network Monitoring
-            subprocess.Popen('./stop_nw_monitor.sh',shell=True)
-            # Wait for log file to be written
-            time.sleep(5)
+        # Make sure all processes have finished execution
+        for k in procs:
+            k.join()
 
-            # File containing network utilization
-            nwfile = open("network_stat.log", "r")
+        # Get average utilization values
+        avg_cpu_util, avg_disk_consumption, avg_disk_read, avg_disk_write, avg_nw_in, avg_nw_out = \
+            monitor.Monitor.get_all_stats(util_object)
 
-            # Calculate average nw utilization
-            for nw_line in nwfile:
+        # Get final cpu utilization value
+        avg_cpu_util = float(avg_cpu_util)
 
-                if 'average' in nw_line:
-                    nw_index = nw_line.find("Mbit/s")
-                    if (nw_index == -1):
-                        nw_index = nw_line.find("kbit/s")
-                        avg_nw_util = nw_line[nw_index-7:nw_index-1]
-                        break
-                    elif (nw_index > 0):
-                        avg_nw_util = nw_line[nw_index-7:nw_index-1]
-                        break
+        # Get average memory utilization
+        avg_mem_util = float(total_mem_util) / float(count)
 
-            # Close network util file
-            nwfile.close()
+        # Write the results
+        resfile.write("num_of_cams: %d avg_cpu: %f avg_disk_consumption: %s avg_disk_read: %s avg_disk_write: %s \ "
+                      "avg_nw_in: %s avg_nw_out: %s avg_mem: %f" % (i, avg_cpu_util, \
+                                                                    avg_disk_consumption, \
+                                                                    avg_disk_read, \
+                                                                    avg_disk_write, \
+                                                                    avg_nw_in, avg_nw_out, avg_mem_util))
+        resfile.write("\n")
 
-            # Write the results
-            resfile.write("num_of_cams: %d init_cpu: %f avg_cpu: %f avg_nw: %s %s" %(i,init_cpu_util,avg_cpu_util,avg_nw_util,nw_line[nw_index:nw_index+6]))
-            resfile.write("\n")
+        # Remove the utilization object
+        del util_object
 
-            # Wait before starting next iteration
-            time.sleep(5)
+        # Wait before starting next iteration
+        time.sleep(SLEEP_TIMEOUT)
 
     # Close input and Output files
     ipfile.close()
