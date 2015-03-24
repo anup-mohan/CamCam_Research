@@ -10,6 +10,7 @@
 from multiprocessing import Process
 from multiprocessing import cpu_count
 import sys
+import os
 import time
 import signal
 import threading
@@ -167,8 +168,15 @@ if __name__ == '__main__':
                                                                     avg_nw_in, avg_nw_out, avg_mem_util))
         resfile.write("\n")
 
+        # Flush the data to the result file
+        resfile.flush()
+        os.fsync(resfile)
+
         # Remove the utilization object
         del util_object
+
+        # Remove the JPG files before the next iteration
+        os.system("rm -rf *.jpg")
 
         # Wait before starting next iteration
         time.sleep(SLEEP_TIMEOUT)
