@@ -35,7 +35,7 @@ class CamThread(threading.Thread):
 
     def run(self):
         # print "Starting " + self.name
-        get_mjpeg_single_cam.get_MJPEG_stream(self.ip_addr,self.trial)
+        get_mjpeg_single_cam.get_MJPEG_stream(self.ip_addr, self.trial)
         # print "Exiting " + self.name
 
 
@@ -51,7 +51,7 @@ def cam_process(start_ptr, end_ptr):
     for j in xrange(start_ptr, end_ptr):
 
         thr_name = "Thread-" + str(j)
-        thread_ptr[j] = CamThread(j, thr_name, line[j].split("\n")[0], i)
+        thread_ptr[j] = CamThread(j, thr_name, line[j].split("\n")[0], trial)
         thread_ptr[j].start()
         threads.append(thread_ptr[j])
 
@@ -59,28 +59,31 @@ def cam_process(start_ptr, end_ptr):
         for k in threads:
             k.join()
 
-
+# Constants used in the program
 NUM_PROCS = cpu_count()
-TIMEOUT_VALUE = 60  # time for which utilization is calculated and averaged
+TIMEOUT_VALUE = 300  # time for which utilization is calculated and averaged
 DOWNLOAD_IMAGE_TIMEOUT = TIMEOUT_VALUE * 3  # Timeout to detect the crashing of the program
-SLEEP_TIMEOUT = 5 # Time to wait before starting next iteration
+SLEEP_TIMEOUT = 5  # Time to wait before starting next iteration
+TIME_START_MEASUREMENT = 60  # Start measurement after a minute to avoid initial jitters
+
+# Input file
+ipfile = open(sys.argv[1], "r")
+line = ipfile.readlines()
+length = len(line)
 
 if __name__ == '__main__':
-
-    # Input file
-    ipfile = open(sys.argv[1], "r")
-    line = ipfile.readlines()
-    length = len(line)
-    thread_ptr = [[] for x in range(length + 1)]
 
     # Output file
     resfile = open("overall_MJPEG_util_results.txt", "w")
 
-    for i in xrange(1,length + 1):
+    for i in xrange(1, length + 1):
 
         # Reset cpu util counters
         count = 0
         total_mem_util = 0.0
+
+        # Set the global variable for trial
+        trial = i
 
         proc_thread_cnt = [0 for x in range(NUM_PROCS)]
 
@@ -89,9 +92,12 @@ if __name__ == '__main__':
 
         # Find num of procs and threads per process
         proc_count = min(NUM_PROCS, i)
-        thread_count = int(proc_count / i)
-        thread_rem = int(proc_count % i)
-        proc_thread_cnt = [thread_count for x in range(NUM_PROCS)]
+        thread_count = int(i / proc_count)
+        thread_rem = int(i % proc_count)
+
+        # Allocate threads equally among processes
+        for j in range(proc_count):
+            proc_thread_cnt[j] = thread_count
 
         # Allocate remaining threads equally among processes
         if (thread_rem != 0):
@@ -121,6 +127,10 @@ if __name__ == '__main__':
 
             # Set timeout for synchronization
             timeout = time.time() + TIMEOUT_VALUE
+            timeMeas = time.time() + TIME_START_MEASUREMENT
+
+            while time.time() < timeMeas:
+                pass
 
             # Define a monitor object to measure utilization
             util_object = monitor.Monitor()
