@@ -41,30 +41,32 @@ class CamThread(threading.Thread):
 
 # Define the process to call threads to analyze the camera
 def cam_process(start_ptr, end_ptr):
-    num_threads = end_ptr - start_ptr
+    num_threads = int(end_ptr) - int(start_ptr)
     thread_ptr = [[] for x in range(num_threads + 1)]
 
     # Initialize the list for thread synchronization
     threads = []
 
     # Start streaming from 'i' number of cameras in parallel
-    for j in xrange(start_ptr, end_ptr):
+    for j in range(num_threads):
 
         thr_name = "Thread-" + str(j)
-        thread_ptr[j] = CamThread(j, thr_name, line[j].split("\n")[0], trial)
+        thread_ptr[j] = CamThread(j, thr_name, line[int(start_ptr) + j].split("\n")[0], trial)
         thread_ptr[j].start()
         threads.append(thread_ptr[j])
 
-        # Make sure all threads have finished execution
-        for k in threads:
-            k.join()
+    # Make sure all threads have finished execution
+    for k in threads:
+        k.join()
 
 # Constants used in the program
 NUM_PROCS = cpu_count()
-TIMEOUT_VALUE = 300  # time for which utilization is calculated and averaged
-DOWNLOAD_IMAGE_TIMEOUT = TIMEOUT_VALUE * 3  # Timeout to detect the crashing of the program
-SLEEP_TIMEOUT = 5  # Time to wait before starting next iteration
-TIME_START_MEASUREMENT = 60  # Start measurement after a minute to avoid initial jitters
+STREAM_TIME = 300 # time for which each camera is streamed
+TIME_STOP_MEASUREMENT = STREAM_TIME * 3/5 # time for which utilization is calculated and averaged
+DOWNLOAD_IMAGE_TIMEOUT = STREAM_TIME * 3  # Timeout to detect the crashing of the program
+SLEEP_TIMEOUT = 60  # Time to wait before starting next iteration
+TIME_START_MEASUREMENT = 0  # Start measurement after a minute to avoid initial jitters
+LOOP_INCREMENT = 1 # Loop increment value
 
 # Input file
 ipfile = open(sys.argv[1], "r")
@@ -76,7 +78,7 @@ if __name__ == '__main__':
     # Output file
     resfile = open("overall_MJPEG_util_results.txt", "w")
 
-    for i in xrange(1, length + 1):
+    for i in xrange(1, length + 1,LOOP_INCREMENT):
 
         # Reset cpu util counters
         count = 0
@@ -106,31 +108,41 @@ if __name__ == '__main__':
                 proc_thread_cnt[k] += 1
                 k += 1
 
+        # print proc_thread_cnt
+        # print proc_count
+        # print thread_count
+        # print thread_rem
+        # continue
+
+        # Update the timeout value as threads are executed in serial
+        # DOWNLOAD_IMAGE_TIMEOUT = TIMEOUT_VALUE * proc_thread_cnt[0] + SLEEP_TIMEOUT
+
         # Start the download timer
         signal.alarm(DOWNLOAD_IMAGE_TIMEOUT)
 
         try:
 
             # Array to save all processes
-            p = [[] for x in range(proc_count)]
+            # p = [[] for x in range(proc_count)]
             ip_index = 0
 
-            # Start the processes
+            # Initialize the processes
             for j in range(proc_count):
-                p[j] = Process(target=cam_process, args=(ip_index, ip_index + proc_thread_cnt[j],))
-                p[j].start()
-                procs.append(p[j])
+                p = Process(target=cam_process, args=(ip_index, ip_index + proc_thread_cnt[j],))
+                procs.append(p)
                 ip_index += proc_thread_cnt[j]
+
+            # Start all the processes
+            p.start()
 
             # Print the number of cameras being analyzed
             print ("%d\n" % i)
 
-            # Set timeout for synchronization
-            timeout = time.time() + TIMEOUT_VALUE
-            timeMeas = time.time() + TIME_START_MEASUREMENT
+            # Set timeout for measuring utilization
+            timeout = time.time() + TIME_STOP_MEASUREMENT
 
-            while time.time() < timeMeas:
-                pass
+            # Wait to avoid initial jitters
+            time.sleep(TIME_START_MEASUREMENT)
 
             # Define a monitor object to measure utilization
             util_object = monitor.Monitor()
@@ -140,6 +152,15 @@ if __name__ == '__main__':
                 _, _, _, mem_util = monitor.Monitor.get_memory_usage()
                 total_mem_util += mem_util
                 count += 1
+
+            # Get average utilization values
+            avg_cpu_util, avg_disk_consumption, avg_disk_read, avg_disk_write, avg_nw_in, avg_nw_out = \
+            monitor.Monitor.get_all_stats(util_object)
+
+            # Make sure all processes have finished execution
+            for k in procs:
+                k.join()
+
 
         except (MemoryError):
             print "Exiting the program due to Memory error"
@@ -154,14 +175,6 @@ if __name__ == '__main__':
 
         # Reset the download timer
         signal.alarm(0)
-
-        # Make sure all processes have finished execution
-        for k in procs:
-            k.join()
-
-        # Get average utilization values
-        avg_cpu_util, avg_disk_consumption, avg_disk_read, avg_disk_write, avg_nw_in, avg_nw_out = \
-            monitor.Monitor.get_all_stats(util_object)
 
         # Get final cpu utilization value
         avg_cpu_util = float(avg_cpu_util)
@@ -185,11 +198,14 @@ if __name__ == '__main__':
         # Remove the utilization object
         del util_object
 
+        # Wait before starting next iteration
+        time.sleep(SLEEP_TIMEOUT)
+
         # Remove the JPG files before the next iteration
         os.system("rm -rf *.jpg")
 
         # Wait before starting next iteration
-        time.sleep(SLEEP_TIMEOUT)
+        time.sleep(SLEEP_TIMEOUT/6)
 
     # Close input and Output files
     ipfile.close()
