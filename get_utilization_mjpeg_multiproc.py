@@ -133,7 +133,8 @@ if __name__ == '__main__':
                 ip_index += proc_thread_cnt[j]
 
             # Start all the processes
-            p.start()
+            for pr in procs:
+                pr.start()
 
             # Print the number of cameras being analyzed
             print ("%d\n" % i)
