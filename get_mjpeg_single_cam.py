@@ -16,11 +16,13 @@ import signal
 # Timeout for single image
 DOWNLOAD_IMAGE_TIMEOUT = 10
 
-# Timeout for a minute of download
-DOWNLOAD_IMAGE_TIMEOUT2 = 70
-
 # Duration of stream
-STREAM_TIME = 60
+STREAM_TIME = 300
+
+# Timeout for a minute of download
+DOWNLOAD_IMAGE_TIMEOUT2 = int(STREAM_TIME) + 10
+
+
 
 
 def timeout_handler(signum, frame):
