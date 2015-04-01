@@ -3,8 +3,6 @@
 import numpy as np
 import cv2
 import sys
-from PIL import Image
-from StringIO import StringIO
 
 help_message = '''
 USAGE: peopledetect.py <image_names> ...
@@ -29,7 +27,7 @@ def find_people(data):
 
     #img = cv2.imread(data)
 
-    img_array = np.asarray(bytearray(data),dtype=np.uint8)
+    img_array = np.asarray(bytearray(data),dtype=np.float)
     img = cv2.imdecode(img_array,0)
 
     hog = cv2.HOGDescriptor()
