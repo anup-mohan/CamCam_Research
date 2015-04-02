@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import sys
 
+
 help_message = '''
 USAGE: peopledetect.py <image_names> ...
 
@@ -25,10 +26,10 @@ def draw_detections(img, rects, thickness = 1):
 
 def find_people(data):
 
-    #img = cv2.imread(data)
+    img = cv2.imread(data)
 
-    img_array = np.asarray(bytearray(data),dtype=np.float)
-    img = cv2.imdecode(img_array,0)
+    # img_array = np.asarray(bytearray(data),dtype=np.uint8)
+    # img = cv2.imdecode(img_array,0)
 
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector( cv2.HOGDescriptor_getDefaultPeopleDetector() )
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     print help_message
 
     count = find_people(sys.argv[1])
-    print count
+
 
     '''
     hog = cv2.HOGDescriptor()

@@ -204,7 +204,7 @@ if __name__ == '__main__':
         time.sleep(SLEEP_TIMEOUT)
 
         # Remove the JPG files before the next iteration
-        os.system("rm -rf *.jpg")
+        # os.system("rm -rf *.jpg")
 
         # Wait before starting next iteration
         time.sleep(SLEEP_TIMEOUT/6)
