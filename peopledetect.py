@@ -26,10 +26,10 @@ def draw_detections(img, rects, thickness = 1):
 
 def find_people(data):
 
-    img = cv2.imread(data)
+    #img = cv2.imread(data)
 
-    # img_array = np.asarray(bytearray(data),dtype=np.uint8)
-    # img = cv2.imdecode(img_array,0)
+    img_array = np.asarray(bytearray(data),dtype=np.uint8)
+    img = cv2.imdecode(img_array,0)
 
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector( cv2.HOGDescriptor_getDefaultPeopleDetector() )
