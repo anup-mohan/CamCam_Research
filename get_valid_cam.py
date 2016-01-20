@@ -3,6 +3,7 @@
 # Script will deem a camera to be invalid if it causes a Value Error, IO Error or a Timeout
 # The script needs an input text file containing the list of IP address of all axis cameras 
 # The input file can be obtained by running get_camera_list.py
+# Usage python get_valid_cam.py inputfilename outputfilename
 ####################################################################################################################
 
 import urllib
@@ -26,15 +27,10 @@ signal.signal(signal.SIGALRM, timeout_handler)
 
 
 # File containing all the ip addresses
-<<<<<<< HEAD
-ipfile = open("axis_camera_list_09_01_2014.txt", "r")
+ipfile = open(sys.argv[1], "r")
 # File to save fps for all cameras
-fpsfile = open("valid_axis_cams_09_01_2014.txt", "w")
-=======
-ipfile = open("axis_US_high.txt", "r")
-# File to save fps for all cameras
-fpsfile = open("test_03_31_2014.txt", "w")
->>>>>>> bbed101f01b9dc4b4fe36a27a0b039cc84433363
+fpsfile = open(sys.argv[2], "w")
+
 
 # Flag to see if stream_mjpeg opened succesfully
 flag_stream_mjpeg =0
@@ -97,6 +93,7 @@ for ip in ipfile:
 	# Write ip and fps to file
 	fpsfile.write("%s" %ip_addr)
 	fpsfile.write("\n")
+
 
 ipfile.close()
 fpsfile.close()
