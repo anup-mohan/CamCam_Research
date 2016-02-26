@@ -1,0 +1,4 @@
+num_of_cams: 1 avg_cpu: 0.000000 top_cpu: 1.273684 avg_disk_consumption: -3.43322753906e-05 avg_disk_read: 0.0865920836511 avg_disk_write: 0.0167653335612 \ avg_nw_in: 0.213969831328 avg_nw_out: 0.0040210267138 avg_mem: 1.094737
+num_of_cams: 6 avg_cpu: 0.000000 top_cpu: 20.189474 avg_disk_consumption: 0.0 avg_disk_read: 0.0 avg_disk_write: 0.00259139996298 \ avg_nw_in: 3.15703386737 avg_nw_out: 0.0339169715468 avg_mem: 3.101754
+num_of_cams: 11 avg_cpu: 11.400000 top_cpu: 46.703509 avg_disk_consumption: 0.0 avg_disk_read: 0.0 avg_disk_write: 0.00465450029429 \ avg_nw_in: 5.34320447072 avg_nw_out: 0.0598854458979 avg_mem: 4.392982
+num_of_cams: 16 avg_cpu: 100.000000 top_cpu: 73.731579 avg_disk_consumption: 0.0 avg_disk_read: 0.0 avg_disk_write: 0.00239499999688 \ avg_nw_in: 7.72430605152 avg_nw_out: 0.0863828435154 avg_mem: 5.564912
