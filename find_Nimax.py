@@ -1,6 +1,5 @@
-# Find the NiMax value given 5 readings of cpu utilization.
+# Find the NiMax value given 4 readings of cpu utilization.
 # First solve the system of linear equations to obtain the a,b,c coefficients
-# Use Levenberg-Marquadt optimization technique to improve the accuracy of the results
 # Find the Ni value such that UTIL <= 95.0
 
 import sys
@@ -11,8 +10,6 @@ from scipy.optimize import leastsq
 MAX_UTIL = 95.0
 DIMENSION = 3
 MAX_Ni = 50
-
-dataset = [1,5,7,2,6,7]
 
 def weighted_mov_avg(values):
 
@@ -95,30 +92,27 @@ def poly_solver(num_values,posn,b,dim):
 	
 
 
-def error_fun(init_estimate, posn, values):
+def error_fun(init_estimate, a,c,posn, value):
 
 	# Length of data
 	length = len(values)
 	
-	# Get the Ni values of corresponding input data
-	xval = []
-	for i in range(num_values):
-		xval.append(posn[i][0])
-	
 	# Initialize matrix and list to store result
-	est_val = np.zeros((length,1),float)
-	err_val = []
+	#est_val = np.zeros((length,1),float)
+	#err_val = []
 
-	# Compute the error matrix
-	for i in range(length):
-		val = 0.0
-		for j in range(DIMENSION):
-			val += np.power(xval[i],DIMENSION-j-1)*init_estimate[j]
-		est_val[i] = values[i] - val
+	# Compute the error value
+	calc_val = a * int(posn)**2 + float(init_estimate[0]) * int(posn) + c
+	#for j in range(DIMENSION):
+		#calc_val += np.power(int(posn),DIMENSION-j-1)*init_estimate[j]
+		
+	
+		
+	err_val = float(value) - calc_val
 	
 	# Convert Matrix to list
-	for i in range(len(est_val)):
-		err_val.append(est_val[i][0])
+	#for i in range(len(est_val)):
+		#err_val.append(est_val[i][0])
 
 	return err_val
 
@@ -141,30 +135,66 @@ def get_NiMax(coef,start_value):
 	return NiMax
 	
 
+# Function to calculate the NiMax value
+def calc_NiMax(util_file):
 
-# Fill in the CPU utilization values
-num_values = int(sys.argv[1])
-values = np.zeros((num_values,1),float)
-posn = np.zeros((num_values,1),float)
+	# Read the utilization file
+	line = util_file.readlines()
+	num_values = len(line)
+	
+	# Flag to determine is NiMax need to be calculated
+	calc_flag = 0
+	
+	# Fill in the CPU utilization values
+	values = np.zeros((num_values,1),float)
+	posn = np.zeros((num_values,1),float)
+	index = 0 # array index
+	
+	# Parse the data in util file
+	for entry in line:
+		# Parse the data in each line
+		items = entry.split(" ")
+		for i in range(len(items)):
+		
+			if (items[i] == "num_of_cams:"):
+				posn[index] = items[i+1]
+				
+			if (items[i] == "top_cpu:"):
+				values[index] = items[i+1]
+		
+		# Increment Array index
+		index += 1
+	
+	# Check if NiMax value is already obtained in test phase
+	for i in range(len(values)):
+		if (values[i][0] >= MAX_UTIL):
+			NiMax = int(posn[i-1][0])
+			calc_flag = 1
+			break 
+			
+	if (calc_flag == 0):
+		
+		# Solve the polynomial equation to find coefficients
+		coef = poly_solver(num_values,posn,values,DIMENSION) 
 
-for i in range(num_values):
-	posn[i] = sys.argv[2*i+2]
-	values[i] = sys.argv[2*i+3]
+		# Find the NiMax value
+		NiMax = get_NiMax(coef,1)
+		
+	# Find the loop increment for prediction purpose
+	loop_inc = int(posn[1][0] - posn[0][0])
 	
 
-#print weighted_mov_avg(dataset[0:3])
-coef = poly_solver(num_values,posn,values,DIMENSION) 
+	return NiMax, loop_inc
+	
 
-# Running LM optimization to minimize error
-coef_lsq = leastsq(error_fun,coef,args=(posn,values))
-print coef
-print coef_lsq[0]
+if __name__ == "__main__":
 
-# Plot the curve
-#plot_compare(coef_lsq[0],num_values,posn,values,DIMENSION)
-#plot(coef_lsq[0],DIMENSION,MAX_Ni)
-
-NiMax = get_NiMax(coef_lsq[0],1)
-
-print NiMax
+	# Read the utilization file
+	util_file = open(sys.argv[1], "r")
+	
+	# Calculate the NiMax value
+	NiMax, loop_inc = calc_NiMax(util_file)
+	
+	print NiMax, loop_inc
+	
 

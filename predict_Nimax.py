@@ -47,44 +47,51 @@ def LM_optimize(index,a,b,c,Nmax_in, cores_in):
 	return coef_lsq[0][0]
 	
 
+
+# Predict the Nimax values for all cores
+def pred_Nimax(Nmax_in,cores_in,threshold):
+
+	# Preset value of cores
+	num_cores = [1,2,4,8]
+	
+	# Array to store result
+	result = np.zeros((len(num_cores),2),int)	
+
+	# Preset a,b,c coefficients
+	if (threshold > 1):
+		a = -0.491
+		b = 8.9011
+		c = -5.1111
+		
+	else:
+		a = -0.0421
+		b = 1.2016
+		c = -0.6111		
+	
+	# Optimize b parameter for accuracy
+	b_final = LM_optimize(2,a,b,c,Nmax_in, cores_in)
+	
+	for i in range(len(num_cores)):
+		result[i][0] = num_cores[i]
+		result[i][1] = int(compute_nmax(a,b_final,c,num_cores[i]))
+		
+	return result
 	
 
 if __name__ == '__main__':
 
 	# Known value of Nmax
 	Nmax_in = int(sys.argv[1])
-
+	
 	# Known value of no: of cores
 	cores_in = int(sys.argv[2])
 
-	# Number of cores of instance types used
-	num_cores = [1,2,4,8]
-	
 	# Threshold to select coefficients in the same order as num_cores
-	threshold = np.array([1,5,10,15])
-
-	# Preset a,b,c coefficients
-	if (Nmax_in > threshold[num_cores.index(cores_in)]):
-		a = -0.491
-		b = 8.9011
-		c = -5.1111
-	else:
-		a = -0.0421
-		b = 1.2016
-		c = -0.6111
-	
-	# Optimize a,b,c parameters
-	a_final = a
-	b_final = b
-	c_final = c
-	#a_final = LM_optimize(1,a,b,c,Nmax_in, cores_in)
-	b_final = LM_optimize(2,a_final,b,c,Nmax_in, cores_in)
-	#c_final = LM_optimize(3,a_final,b_final,c,Nmax_in, cores_in)
+	threshold = int(sys.argv[3])
 	
 	# Predict Nmax values for all instance types
-	for i in range(len(num_cores)):
-		print num_cores[i] , int(compute_nmax(a_final,b_final,c_final,num_cores[i]))
+	result = pred_Nimax(Nmax_in,cores_in,threshold)
 	
-	#print a,b,c
-	#print a_final,b_final,c_final
+	print result
+
 
