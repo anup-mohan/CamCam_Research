@@ -183,7 +183,6 @@ def calc_NiMax(util_file):
 	# Find the loop increment for prediction purpose
 	#loop_inc = int(posn[1][0] - posn[0][0])
 	
-	plot(coef,3,18)
 
 	return NiMax
 	
