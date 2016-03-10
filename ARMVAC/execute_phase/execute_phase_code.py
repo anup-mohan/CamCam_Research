@@ -1,11 +1,5 @@
 ##############################################################################################################################
 # Script to calculate the dependence of frame rate, cpu/memory/network/IO utilizations on no:of cameras.
-# The script will calculate the overall cpu and network utilization for streaming data from different cameras in parallel
-# The no: of cameras to be analyzed in parallel is increased in steps of 1 and utilization for each step is noted.
-# The utilization of individual cameras are recorded using psutil with the Monitor class
-# The input file should contain the list of valid cameras to be analyzed
-# The utilization results would be saved in the file name specified
-# The frame rate information would be present in the text file having the same name as camera ip address
 # Usage: python get_utilization_mjpeg_me.py module_fname ip_fname out_fname fps num_cams stream_time total_analysis_time 
 ##############################################################################################################################
 
@@ -68,7 +62,7 @@ def cam_process(analysis_mod,start_ptr, end_ptr, line, trial,des_fps,fps_method,
 
 
 # Routine to stream and analyze data from cameras
-def run_analysis_on_cameras(analysis_mod,ipfilename,resfilename,des_fps,num_cams,STREAM_TIME,TOTAL_TIME):
+def run_analysis_on_cameras(analysis_mod,ipfilename,resfilename,des_fps,num_cams,STREAM_TIME,TOTAL_TIME,start_ip_ptr):
 
 	# Read input ip address file 
 	ipfile = open(ipfilename, "r")
@@ -121,7 +115,8 @@ def run_analysis_on_cameras(analysis_mod,ipfilename,resfilename,des_fps,num_cams
 				proc_thread_cnt[k] += 1
 				k += 1
 
-		ip_index = 0
+		# Use ip addr from the start pointer
+		ip_index = int(start_ip_ptr)
 
 		# Initialize the processes
 		for j in range(proc_count):
@@ -177,13 +172,10 @@ def run_analysis_on_cameras(analysis_mod,ipfilename,resfilename,des_fps,num_cams
 		avg_mem_util = float(total_mem_util) / float(count)
 		avg_top_cpu_util = float(avg_top_cpu_util) / float(count)
 
-		# Increment the data point counter if cpu util is non zero
-		if (avg_top_cpu_util > 0.0):
-			num_data_points += 1
 
 		# Write the results
 		resfile.write("num_of_cams: %d avg_cpu: %f top_cpu: %f avg_disk_consumption: %s avg_disk_read: %s avg_disk_write: %s \ "
-				      "avg_nw_in: %s avg_nw_out: %s avg_mem: %f" % (i, avg_cpu_util, avg_top_cpu_util, \
+				      "avg_nw_in: %s avg_nw_out: %s avg_mem: %f" % (num_cams, avg_cpu_util, avg_top_cpu_util, \
 				                                                    avg_disk_consumption, \
 				                                                    avg_disk_read, \
 				                                                    avg_disk_write, \
@@ -198,8 +190,8 @@ def run_analysis_on_cameras(analysis_mod,ipfilename,resfilename,des_fps,num_cams
 		del util_object
 
 		# Exit if enough data points are obtained
-		if (avg_top_cpu_util > CPU_THRESHOLD):
-			break
+		#if (avg_top_cpu_util > CPU_THRESHOLD):
+			#break
 
 		# Wait before starting next iteration
 		time.sleep(SLEEP_TIMEOUT)
@@ -238,9 +230,12 @@ if __name__ == '__main__':
 
 	# Total analysis time
 	TOTAL_TIME = sys.argv[7]
+	
+	# The ip addr to start with in the ipfilename
+	start_ip_ptr = sys.argv[8]
 
 	# Run the analysis on cameras
-	run_analysis_on_cameras(analysis_mod,ipfilename,resfilename,des_fps,num_cams,STREAM_TIME,TOTAL_TIME)
+	run_analysis_on_cameras(analysis_mod,ipfilename,resfilename,des_fps,num_cams,STREAM_TIME,TOTAL_TIME,start_ip_ptr)
 
     
 
