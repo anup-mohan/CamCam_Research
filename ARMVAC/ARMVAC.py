@@ -16,13 +16,13 @@ INST_LAUNCH_WAIT = 60 # Time to wait after launching an instance
 TEST_PHASE_FILES = "test_phase.tar.gz" # Neccessary files for test phase
 EXEC_PHASE_FILES = "execute_phase.tar.gz" # Neccessary files for execute phase
 
-# Parameters to connect to instance
-KEY_FILE = 'Anup_Key.pem'
-KEYNAME = 'Anup_Key'
+# Parameters to connect to instance. Modify accordingly to connect to your account
+KEY_FILE = 'Anup_Key.pem' # Modify to use your key file
+KEYNAME = 'Anup_Key' # Modify to use your key file
 USERNAME = 'ubuntu'
 REGIONS = ['us-west-2']
-AWS_ACCESS_KEY = 'AKIAIZHJ7ZRJNZQ37XMA'
-AWS_SECRET_KEY = 'oDYEb0UZ+bM3BUBI/MeR5clGZtY4PlAYw04CSbzG'
+AWS_ACCESS_KEY = "" # Add your AWS access key here
+AWS_SECRET_KEY = "" # Add your AWS secret key here
 AMI_ID = 'ami-a8f419c8'
 REMOTEFILEPATH = '/home/ubuntu/'
 
